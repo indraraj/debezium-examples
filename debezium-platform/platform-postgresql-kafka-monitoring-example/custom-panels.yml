@@ -1,0 +1,49 @@
+# Extra monitoring panels, merged with the 14 built-in panels by `id`.
+# An id that already exists replaces the built-in panel. A new id is appended.
+# `{{pipeline_id}}` is replaced with the pipeline name before the query runs.
+# `category` is `streaming` or `snapshot` and chooses the section in the UI.
+panels:
+  - id: streaming-event-count
+    title: "Change Events (1m window)"
+    description: "Built-in panel overridden to a 1 minute rate so a short demo reacts faster than the default 5 minute window"
+    category: streaming
+    query: >-
+      rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="streaming"}[1m])
+      or label_replace(sum(rate(debezium_event_count_total{service_name="{{pipeline_id}}",debezium_context="streaming"}[1m])),
+      "debezium_event_type", "total", "", "")
+    unit: events/s
+    visualization:
+      type: area
+      suggestedStep: 15s
+
+  - id: jvm-heap-utilization
+    title: "JVM Heap Utilization"
+    description: "Heap used as a percentage of the heap limit for this pipeline's Debezium Server JVM"
+    category: streaming
+    query: >-
+      sum(jvm_memory_used_bytes{service_name="{{pipeline_id}}",jvm_memory_type="heap"})
+      / sum(jvm_memory_limit_bytes{service_name="{{pipeline_id}}",jvm_memory_type="heap"}) * 100
+    unit: "%"
+    visualization:
+      type: donut-utilization
+      suggestedStep: 15s
+
+  - id: kafka-producer-throughput
+    title: "Kafka Producer Throughput"
+    description: "Bytes per second written to Kafka by the pipeline's producer"
+    category: streaming
+    query: 'sum(kafka_producer_outgoing_byte_rate{service_name="{{pipeline_id}}"})'
+    unit: B/s
+    visualization:
+      type: area
+      suggestedStep: 15s
+
+  - id: jvm-gc-pause
+    title: "JVM GC Pause Time"
+    description: "Seconds spent in garbage collection per second"
+    category: streaming
+    query: 'sum(rate(jvm_gc_duration_seconds_sum{service_name="{{pipeline_id}}"}[5m]))'
+    unit: s/s
+    visualization:
+      type: line
+      suggestedStep: 15s

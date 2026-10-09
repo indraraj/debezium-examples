@@ -1,0 +1,16 @@
+# Layered on top of values.yaml by ./add-custom-panels.sh.
+# Mount the directory, not a single file via subPath. subPath mounts do not
+# receive ConfigMap updates, which breaks the live panel edit in the README.
+conductor:
+  extraVolumes:
+    - name: custom-panels
+      configMap:
+        name: custom-panels
+  extraVolumeMounts:
+    - name: custom-panels
+      mountPath: /deployments/panels
+      readOnly: true
+monitoring:
+  panels:
+    additionalPanelsPath: /deployments/panels/panels.yml
+    refreshInterval: 30s
